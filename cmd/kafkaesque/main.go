@@ -1,31 +1,30 @@
 package main
 
-// import (
-// 	"context"
-// 	"fmt"
-// 	"time"
+import (
+	"fmt"
+	"time"
 
-// 	"github.com/TheVidz/Kafkaesque/pkg/broker"
-// 	"github.com/TheVidz/Kafkaesque/pkg/broker/memory"
-// )
+	"github.com/TheVidz/Kafkaesque/pkg/broker"
+	"github.com/TheVidz/Kafkaesque/pkg/broker/memory"
+)
 
-// func main() {
-//     b := memory.New()
-//     _ = b.CreateTopic(context.Background(), "demo", broker.TopicOptions{Partitions: 1})
+func main() {
+	b := memory.NewMemoryBroker()
 
-//     msgs, stop, err := b.Consumer().Subscribe(context.Background(), "demo", "g1")
-//     if err != nil { panic(err) }
-//     defer stop()
+	// Create subscriber
+	subCh := make(chan broker.Message, 10)
+	b.Subscribe("orders", subCh)
 
-//     go func() {
-//         for m := range msgs {
-//             fmt.Printf("[consumer] %s:%d %s\n", m.Topic, m.Offset, string(m.Value))
-//         }
-//     }()
+	// Consumer goroutine
+	go func() {
+		for msg := range subCh {
+			fmt.Printf("[Consumer] got message: %s\n", msg.Payload)
+		}
+	}()
 
-//     for i := 0; i < 3; i++ {
-//         _, _ = b.Producer().Publish(context.Background(), "demo", "", []byte(fmt.Sprintf("hello-%d", i)))
-//         time.Sleep(200 * time.Millisecond)
-//     }
-//     time.Sleep(time.Second)
-// }
+	// Producer loop
+	for i := 0; i < 5; i++ {
+		b.Publish("orders", []byte(fmt.Sprintf("order-%d", i)))
+		time.Sleep(500 * time.Millisecond)
+	}
+}

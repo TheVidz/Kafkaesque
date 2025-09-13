@@ -1,2 +1,22 @@
 # Kafkaesque
 Attempt at "Build my own Kafka"
+
+So learnings:
+An important reason for this project is to learn Golang and in golang one of the 
+things that make it good and unique is, Goroutines
+So ill try to "get" them
+so here we use Mutex, mutual exclusion like from OS, lock lets only one goroutine access
+here the use is
+
+Multiple producers may be publishing at the same time.
+
+Multiple consumers may be subscribing or receiving at the same time.
+
+Using sync.RWMutex ensures that:
+
+Readers don’t block each other (fast broadcasts).
+
+Writers block readers only when necessary (safe subscription changes).
+
+
+So now a basic broker is working, consumers getting messages from topics
