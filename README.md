@@ -20,3 +20,21 @@ Writers block readers only when necessary (safe subscription changes).
 
 
 So now a basic broker is working, consumers getting messages from topics
+
+New example showcasing actual use case of broker:
+
+```
+[Producer-2] published: payment-1
+[Producer-1] published: order-1
+[Consumer-B] received from topic=orders : order-1
+[Consumer-C] received from topic=payments : payment-1
+[Consumer-A] received from topic=orders : order-1
+[Producer-1] published: order-2
+[Consumer-B] received from topic=orders : order-2
+[Consumer-A] received from topic=orders : order-2
+[Producer-2] published: payment-2
+[Consumer-C] received from topic=payments : payment-2
+[Producer-1] published: order-3
+[Consumer-B] received from topic=orders : order-3
+[Consumer-A] received from topic=orders : order-3
+```
