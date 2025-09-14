@@ -1,10 +1,10 @@
 package memory
 
 import (
-	"fmt"
-	"github.com/TheVidz/Kafkaesque/pkg/broker"
 	"sync"
 	"time"
+
+	"github.com/TheVidz/Kafkaesque/pkg/broker"
 )
 
 type MemoryBroker struct {
@@ -33,18 +33,20 @@ func (mb *MemoryBroker) Publish(topic string, payload []byte) error {
 	t := mb.getOrCreateTopic(topic)
 
 	msg := broker.Message{
-		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
+		ID:        time.Now().UnixNano(),
 		Topic:     topic,
 		Payload:   payload,
 		Timestamp: time.Now(),
 	}
 
-	t.Broadcast(msg)
+	// Phase-2 publish
+	t.Publish(msg)
 	return nil
 }
 
-func (mb *MemoryBroker) Subscribe(topic string, ch chan<- broker.Message) error {
+// Instead of taking a raw channel, we now take a *Subscriber
+func (mb *MemoryBroker) Subscribe(topic string, sub *broker.Subscriber) error {
 	t := mb.getOrCreateTopic(topic)
-	t.AddSubscriber(ch)
+	t.AddSubscriber(sub)
 	return nil
 }

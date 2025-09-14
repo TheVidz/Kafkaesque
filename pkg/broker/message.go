@@ -3,7 +3,7 @@ package broker
 import "time"
 
 type Message struct {
-	ID        string
+	ID        int64
 	Topic     string
 	Payload   []byte
 	Timestamp time.Time

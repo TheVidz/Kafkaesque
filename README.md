@@ -6,6 +6,9 @@ An important reason for this project is to learn Golang and in golang one of the
 things that make it good and unique is, Goroutines
 So ill try to "get" them
 so here we use Mutex, mutual exclusion like from OS, lock lets only one goroutine access
+
+update: and whoa go is so cool like, we can use the defer keyword to schedule smth like a mutex.Unlock whenever the function exits, such clean, such safe
+
 here the use is
 
 Multiple producers may be publishing at the same time.
@@ -38,3 +41,10 @@ New example showcasing actual use case of broker:
 [Consumer-B] received from topic=orders : order-3
 [Consumer-A] received from topic=orders : order-3
 ```
+
+
+update 2:
+
+what the helly golang??
+` In Go, only identifiers starting with an uppercase letter are exported and accessible from other packages` ??? why
+lolz

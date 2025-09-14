@@ -5,55 +5,51 @@ import (
 	"time"
 
 	"github.com/TheVidz/Kafkaesque/pkg/broker"
-	"github.com/TheVidz/Kafkaesque/pkg/broker/memory"
 )
 func main() {
-	b := memory.NewMemoryBroker()
+	b := broker.NewBroker()
+	b.CreateTopic("demo")
 
-	// === Consumers ===
-	// Consumer A subscribes to "orders"
-	subA := make(chan broker.Message, 10)
-	b.Subscribe("orders", subA)
-	go consumer("Consumer-A", subA)
+	// subscriber that ACKs after a delay (shows retry behavior)
+	sub1 := broker.NewSubscriber("sub1")
+	_ = b.Subscribe("demo", sub1)
 
-	// Consumer B subscribes to "orders"
-	subB := make(chan broker.Message, 10)
-	b.Subscribe("orders", subB)
-	go consumer("Consumer-B", subB)
+	// subscriber that immediately ACKs (fast)
+	sub2 := broker.NewSubscriber("sub2")
+	_ = b.Subscribe("demo", sub2)
 
-	// Consumer C subscribes to "payments"
-	subC := make(chan broker.Message, 10)
-	b.Subscribe("payments", subC)
-	go consumer("Consumer-C", subC)
-
-	// === Producers ===
-	// Producer 1 publishes to "orders"
+	// sub1 goroutine: simulate slow processing then ack
 	go func() {
-		for i := 1; i <= 3; i++ {
-			msg := fmt.Sprintf("order-%d", i)
-			b.Publish("orders", []byte(msg))
-			fmt.Printf("[Producer-1] published: %s\n", msg)
-			time.Sleep(500 * time.Millisecond)
+		for msg := range sub1.Ch {
+			fmt.Printf("[sub1] received msg %d: %s\n", msg.ID, string(msg.Payload))
+			// simulate slow processing so broker will retry
+			time.Sleep(3 * time.Second)
+			fmt.Printf("[sub1] ACKing %d\n", msg.ID)
+			sub1.Ack(msg.ID)
 		}
 	}()
 
-	// Producer 2 publishes to "payments"
+	// sub2 goroutine: fast processing
 	go func() {
-		for i := 1; i <= 2; i++ {
-			msg := fmt.Sprintf("payment-%d", i)
-			b.Publish("payments", []byte(msg))
-			fmt.Printf("[Producer-2] published: %s\n", msg)
-			time.Sleep(700 * time.Millisecond)
+		for msg := range sub2.Ch {
+			fmt.Printf("[sub2] received msg %d: %s\n", msg.ID, string(msg.Payload))
+			// immediate ack
+			sub2.Ack(msg.ID)
 		}
 	}()
 
-	// Give enough time for goroutines to finish
-	time.Sleep(3 * time.Second)
-}
-
-func consumer(name string, ch <-chan broker.Message) {
-	for msg := range ch {
-		fmt.Printf("[%s] received from topic=%s : %s\n",
-			name, msg.Topic, string(msg.Payload))
+	// publish a few messages
+	for i := 1; i <= 2; i++ {
+		body := fmt.Sprintf("message-%d", i)
+		msg, err := b.PublishString("demo", body)
+		if err != nil {
+			fmt.Printf("publish err: %v\n", err)
+			continue
+		}
+		fmt.Printf("[publisher] published id=%d body=%s\n", msg.ID, body)
 	}
+
+	// wait so we can observe retries
+	time.Sleep(12 * time.Second)
+	fmt.Println("demo finished")
 }
